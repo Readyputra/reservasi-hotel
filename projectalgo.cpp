@@ -11,11 +11,11 @@ struct Reservasi {
 Reservasi* head = NULL;
 Reservasi* tail = NULL;
 
-void tambahReservasi() {
+void buatReservasi() {
     string nama;
     int kamar, lama;
 
-    cout << "\n=== Tambah Reservasi ===\n";
+    cout << "\n=== Buat Reservasi ===\n";
     cout << "Nama: ";
     cin >> nama;
     cout << "Nomor Kamar: ";
@@ -59,6 +59,30 @@ void tampilkan() {
     }
 }
 
+void cari() {
+    string nama;
+    cout << "\nMasukkan nama yang dicari: ";
+    cin >> nama;
+
+    Reservasi* temp = head;
+    bool ditemukan = false;
+
+    while (temp != NULL) {
+        if (temp->nama == nama) {
+            cout << "Ditemukan: "
+                 << temp->nama << " | Kamar: "
+                 << temp->nomorKamar << " | Lama: "
+                 << temp->lamaInap << " hari\n";
+            ditemukan = true;
+        }
+        temp = temp->next;
+    }
+
+    if (!ditemukan) {
+        cout << "Data tidak ditemukan!\n";
+    }
+}
+
 void hapusReservasi() {
     string nama;
     cout << "\nMasukkan nama yang ingin dihapus: ";
@@ -98,5 +122,36 @@ void hapusReservasi() {
 
 
 int main() {
+    int opsi;
+
+    do {
+        cout << "\n=== MENU RESERVASI HOTEL ===\n";
+        cout << "1. Buat Reservasi\n";
+        cout << "2. Tampilkan Reservasi\n";
+        cout << "3. Cari Reservasi\n";
+        cout << "4. Hapus Reservasi\n";
+        cout << "Pilih opsi: ";
+        cin >> opsi;
+
+        switch (opsi) {
+            case 1: 
+                buatReservasi(); 
+                break;
+            case 2: 
+                tampilkan(); 
+                break;
+            case 3: 
+                cari(); 
+                break;
+            case 4: 
+                hapusReservasi(); 
+                break;
+            case 5: 
+            default: 
+                cout << "Pilihan tidak valid!\n";
+        }
+
+    } while (opsi != 0);
+
     return 0;
 }
