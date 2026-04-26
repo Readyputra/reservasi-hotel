@@ -8,8 +8,36 @@ struct Reservasi {
     Reservasi* next;
 };
 
+struct ReservasiDLL {
+    string nama;
+    int nomorKamar;
+    int lamaInap;
+    ReservasiDLL* next;
+    ReservasiDLL* prev;
+};
+
 Reservasi* head = NULL;
 Reservasi* tail = NULL;
+
+ReservasiDLL* headDLL = NULL;
+ReservasiDLL* tailDLL = NULL;
+
+void tambahKeDLL(string nama, int kamar, int lama) {
+    ReservasiDLL* baru = new ReservasiDLL;
+    baru->nama = nama;
+    baru->nomorKamar = kamar;
+    baru->lamaInap = lama;
+    baru->next = NULL;
+    baru->prev = NULL;
+
+    if (headDLL == NULL) {
+        headDLL = tailDLL = baru;
+    } else {
+        tailDLL->next = baru;
+        baru->prev = tailDLL;
+        tailDLL = baru;
+    }
+}
 
 void buatReservasi() {
     string nama;
@@ -36,18 +64,20 @@ void buatReservasi() {
         tail = baru;
     }
 
+    tambahKeDLL(nama, kamar, lama);
+
     cout << "Data berhasil ditambahkan!\n";
 }
 
 void tampilkan() {
     cout << "\n=== Data Reservasi ===\n";
 
-    if (head == NULL) {
+    if (headDLL == NULL) { 
         cout << "Data masih kosong!\n";
         return;
     }
 
-    Reservasi* temp = head;
+    ReservasiDLL* temp = headDLL;
     int no = 1;
 
     while (temp != NULL) {
@@ -64,7 +94,7 @@ void cari() {
     cout << "\nMasukkan nama yang dicari: ";
     cin >> nama;
 
-    Reservasi* temp = head;
+    Reservasi* temp = head; 
     bool ditemukan = false;
 
     while (temp != NULL) {
@@ -90,36 +120,49 @@ void hapusReservasi() {
 
     Reservasi* temp = head;
     Reservasi* prev = NULL;
+    bool ada = false;
 
     while (temp != NULL) {
         if (temp->nama == nama) {
-
+            ada = true;
             if (prev == NULL) {
                 head = temp->next;
-
                 if (head == NULL) {
                     tail = NULL;
                 }
             } else {
                 prev->next = temp->next;
-
                 if (temp == tail) {
                     tail = prev;
                 }
             }
-
             delete temp;
-            cout << "Data berhasil dihapus!\n";
-            return;
+            break; 
         }
-
         prev = temp;
         temp = temp->next;
     }
 
-    cout << "Data tidak ditemukan!\n";
-}
+    if (ada) {
+        ReservasiDLL* tempDLL = headDLL;
+        while (tempDLL != NULL) {
+            if (tempDLL->nama == nama) {
+                if (tempDLL->prev != NULL) tempDLL->prev->next = tempDLL->next;
+                else headDLL = tempDLL->next;
 
+                if (tempDLL->next != NULL) tempDLL->next->prev = tempDLL->prev;
+                else tailDLL = tempDLL->prev;
+
+                delete tempDLL;
+                break;
+            }
+            tempDLL = tempDLL->next;
+        }
+        cout << "Data berhasil dihapus!\n";
+    } else {
+        cout << "Data tidak ditemukan!\n";
+    }
+}
 
 int main() {
     int opsi;
