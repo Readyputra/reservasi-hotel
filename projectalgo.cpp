@@ -3,6 +3,12 @@
 #include <iomanip>
 using namespace std;
 
+struct User {
+    string username;
+    string password;
+    string role;
+};
+
 struct Reservasi {
     string nama;
     int nomorKamar;
@@ -18,11 +24,15 @@ struct ReservasiDLL {
     ReservasiDLL* prev;
 };
 
+
 Reservasi* head = NULL;
 Reservasi* tail = NULL;
 
 ReservasiDLL* headDLL = NULL;
 ReservasiDLL* tailDLL = NULL;
+
+string loginUser = "";
+string loginRole = "";
 
 void tambahKeDLL(string nama, int kamar, int lama) {
     ReservasiDLL* baru = new ReservasiDLL;
@@ -84,6 +94,54 @@ void bacaFile(){
         tambahKeDLL(nama, kamar, lama);
     }
     fclose(file);
+}
+
+void registerUser(){
+    string usn, pw, role;
+
+    cout << "\nREGISTER\n";
+    cout << "Username          : "; cin >> usn;
+    cout << "Password          : "; cin >> pw;
+    cout << "Role (admin/user) : "; cin >> role;
+
+    FILE *file = fopen("users.txt", "a");
+
+    fprintf(file, "%s, %s, %s\n",
+            usn.c_str(), pw.c_str(), role.c_str());
+    
+    fclose(file);
+    cout << "Register berhasil!\n";
+}
+
+bool login() {
+    string usn, pw;
+    cout << "\nLOGIN\n";
+
+    cout << "Username : "; cin >> usn;
+    cout << "Password : "; cin >> pw;
+
+    FILE *file = fopen("users.txt", "r");
+    if (!file) return false;
+
+    char user[100], pass[100], role[100];
+
+    while (fscanf(file, "%s, %s, %s", user, pass, role) != EOF) {
+
+        User usr;
+        usr.username = user;
+        usr.password = pass;
+        usr.role = role;
+
+        if (usn == usr.username && pw == usr.password) {
+            loginUser = usr.username;
+            loginRole = usr.role;
+            fclose(file);
+            return true;
+        }
+    }
+
+    fclose(file);
+    return false;
 }
 
 void buatReservasi() {
@@ -255,47 +313,106 @@ void sortingNama(){
     cout << "\nData berhasil diurutkan!\n";
 }
 
-int main() {
-    int opsi;
-
-    do {
+void menuAdmin() {
+    int pilih;
+    do{
         cout << "\n=====================================\n";
-        cout << "       SISTEM RESERVASI HOTEL       \n";
+        cout << "             MENU ADMIN             \n";
         cout << "=====================================\n";
         cout << "1. Tambah Reservasi\n";
         cout << "2. Tampilkan Data\n";
         cout << "3. Cari Data\n";
-        cout << "4. Hapus Data\n";
+        cout << "4. Hapus Reservasi\n";
         cout << "5. Sorting Nama\n";
-        cout << "6. Keluar\n";
-        cout << "-------------------------------------\n";
-        cout << "Pilih opsi : ";
-        cin >> opsi;
+        cout << "6. Logout\n";
 
-        switch (opsi) {
-            case 1: 
-                buatReservasi(); 
+        cout << "Pilih : "; cin >> pilih;
+        switch (pilih) {
+            case 1: buatReservasi(); break;
+            case 2: tampilkan(); break;
+            case 3: cari(); break;
+            case 4: hapusReservasi(); break;
+            case 5: sortingNama(); break;
+        }
+    } while (pilih != 6);
+}
+
+void menuUser() {
+    int pilih;
+    do{
+        cout << "\n=====================================\n";
+        cout << "              MENU USER             \n";
+        cout << "=====================================\n";
+        cout << "1. Buat Reservasi\n";
+        cout << "2. Cari Reservasi\n";
+        // cout << "3. Check In\n";
+        // cout << "4. Check Out\n";
+        cout << "5. Logout\n";
+        cout << "Pilih : ";
+        cin >> pilih;
+
+        switch(pilih){
+            case 1:
+                buatReservasi();
                 break;
-            case 2: 
-                tampilkan(); 
+            case 2:
+                cari();
                 break;
-            case 3: 
-                cari(); 
+            case 3:
+                ;
                 break;
-            case 4: 
-                hapusReservasi(); 
+            case 4:
+                ;
                 break;
-            case 5: 
-                sortingNama();
+            case 5:
+                cout << "Logout berhasil!\n";
                 break;
-            case 6:
-                cout << "Program Selesai.\n";
-                break;
-            default: 
+            default:
                 cout << "Pilihan tidak valid!\n";
         }
+    }while(pilih != 5);
+}
 
-    } while (opsi != 6);
+void menuLogin() {
+    int pilih;
+    do{
+        cout << "\n=====================================\n";
+        cout << "             MENU LOGIN             \n";
+        cout << "=====================================\n";
 
+        cout << "1. Register\n";
+        cout << "2. Login\n";
+        cout << "3. Keluar\n";
+        cout << "Pilih : ";
+        cin >> pilih;
+
+        switch(pilih){
+            case 1:
+                registerUser();
+                break;
+            case 2:
+                if(login()){
+                    cout << "Login berhasil!\n";
+                    if(loginRole == "admin"){
+                        menuAdmin();
+                    }else{
+                        menuUser();
+                    }
+                }else{
+                    cout << "Login gagal!\n";
+                }
+                break;
+            case 3:
+                cout << "Program selesai!\n";
+                break;
+            default:
+                cout << "Pilihan tidak valid!\n";
+        }
+    }while(pilih != 3);
+}
+
+int main() {
+    bacaFile();
+    menuLogin();
     return 0;
 }
