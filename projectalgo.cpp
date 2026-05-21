@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <iomanip>
+
 using namespace std;
 
 struct User {
@@ -11,56 +12,59 @@ struct User {
 
 struct Reservasi {
     string nama;
+    string tipeKamar;
+    string status;
     int nomorKamar;
     int lamaInap;
+    int harga;
+    int total;
+
     Reservasi* next;
 };
-
-struct ReservasiDLL {
-    string nama;
-    int nomorKamar;
-    int lamaInap;
-    ReservasiDLL* next;
-    ReservasiDLL* prev;
-};
-
 
 Reservasi* head = NULL;
 Reservasi* tail = NULL;
 
-ReservasiDLL* headDLL = NULL;
-ReservasiDLL* tailDLL = NULL;
-
 string loginUser = "";
 string loginRole = "";
 
-void tambahKeDLL(string nama, int kamar, int lama) {
-    ReservasiDLL* baru = new ReservasiDLL;
-    baru->nama = nama;
-    baru->nomorKamar = kamar;
-    baru->lamaInap = lama;
-    baru->next = NULL;
-    baru->prev = NULL;
+int hargaKamar(string tipe){
+    if(tipe == "Standard"){
+        return 200000;
+    }else if(tipe == "Deluxe"){
+        return 350000;
+    }else if(tipe == "Suite"){
+        return 500000;
+    } 
+    return 0;
+}
 
-    if (headDLL == NULL) {
-        headDLL = tailDLL = baru;
-    } else {
-        tailDLL->next = baru;
-        baru->prev = tailDLL;
-        tailDLL = baru;
+bool cekKamar(int kamar){
+    Reservasi* temp = head;
+    
+    while(temp != NULL){
+        if(temp->nomorKamar == kamar && temp->status != "checkout"){
+            return true;
+           }
+           temp = temp->next;
     }
+    return false;
 }
 
 void simpanFile(){
     FILE *file = fopen("reservasi.txt", "w");
 
-    ReservasiDLL* temp = headDLL;
+    Reservasi* temp = head;
 
     while(temp != NULL){
-        fprintf(file, "%s, %d, %d \n",
+        fprintf(file, "%s %s %s %d %d %d %d \n",
                     temp->nama.c_str(),
+                    temp->tipeKamar.c_str(),
+                    temp->status.c_str(),
                     temp->nomorKamar,
-                    temp->lamaInap);
+                    temp->lamaInap,
+                    temp->harga,
+                    temp->total);
         
         temp = temp->next;
     }
@@ -75,14 +79,22 @@ void bacaFile(){
     }
 
     char nama[100];
-    int kamar, lama;
+    char tipe[100];
+    char status[100];
+    int kamar, lama, harga, total;
 
-    while(fscanf(file, "%s, %d, %d", nama, &kamar, &lama) != EOF){
+    while(fscanf(file, "%s %s %s %d %d %d %d",
+                        nama, tipe, status,
+                        &kamar, &lama, &harga, &total) != EOF){
         Reservasi* baru = new Reservasi;
 
         baru->nama = nama;
+        baru->tipeKamar = tipe;
+        baru->status = status;
         baru->nomorKamar = kamar;
         baru->lamaInap = lama;
+        baru->harga = harga;
+        baru->total = total;
         baru->next = NULL;
     
         if(head == NULL){
@@ -91,9 +103,60 @@ void bacaFile(){
             tail->next = baru;
             tail = baru;
         }
-        tambahKeDLL(nama, kamar, lama);
     }
     fclose(file);
+}
+
+void tambahReservasi() {
+    string nama, tipe;
+    int kamar, lama;
+    int pilih;
+
+    cout << "\n===== TAMBAH RESERVASI =====\n";
+    cout << "Nama        : "; cin >> nama;
+    cout << "Nomor kamar : "; cin >> kamar;
+
+    if(cekKamar(kamar)){
+
+        cout << "Kamar sudah dipakai!\n";
+        return;
+    }
+
+    cout << "\n1. Standard\n";
+    cout << "2. Deluxe\n";
+    cout << "3. Suite\n";
+    cout << "Pilih : "; cin >> pilih;
+
+    if (pilih == 1) {
+        tipe = "Standard";
+    } else if (pilih == 2){
+        tipe = "Deluxe";
+    } else {
+        tipe = "Suite";
+    }
+    cout << "Lama inap : "; cin >> lama;
+
+    int harga = hargaKamar(tipe);
+    int total = harga * lama;
+
+    Reservasi* baru = new Reservasi;
+
+    baru->nama = nama;
+    baru->status = "Booking";
+    baru->nomorKamar = kamar;
+    baru->tipeKamar = tipe;
+    baru->lamaInap = lama;
+    baru->harga = harga;
+    baru->total = total;
+    baru->next = NULL;
+
+    if (head == NULL) head = tail = baru;
+    else {
+        tail->next = baru;
+        tail = baru;
+    }
+    simpanFile();
+    cout << "Berhasil ditambahkan!\n";
 }
 
 void registerUser(){
@@ -106,7 +169,7 @@ void registerUser(){
 
     FILE *file = fopen("users.txt", "a");
 
-    fprintf(file, "%s, %s, %s\n",
+    fprintf(file, "%s %s %s\n",
             usn.c_str(), pw.c_str(), role.c_str());
     
     fclose(file);
@@ -125,7 +188,7 @@ bool login() {
 
     char user[100], pass[100], role[100];
 
-    while (fscanf(file, "%s, %s, %s", user, pass, role) != EOF) {
+    while (fscanf(file, "%s %s %s", user, pass, role) != EOF) {
 
         User usr;
         usr.username = user;
@@ -144,42 +207,12 @@ bool login() {
     return false;
 }
 
-void buatReservasi() {
-    string nama;
-    int kamar, lama;
-
-    cout << "\n=== Buat Reservasi ===\n";
-    cout << "Nama: ";
-    cin >> nama;
-    cout << "Nomor Kamar: ";
-    cin >> kamar;
-    cout << "Lama Inap (hari): ";
-    cin >> lama;
-
-    Reservasi* baru = new Reservasi;
-    baru->nama = nama;
-    baru->nomorKamar = kamar;
-    baru->lamaInap = lama;
-    baru->next = NULL;
-
-    if (head == NULL) {
-        head = tail = baru;
-    } else {
-        tail->next = baru;
-        tail = baru;
-    }
-
-    tambahKeDLL(nama, kamar, lama);
-
-    cout << "Data berhasil ditambahkan!\n";
-}
-
 void tampilkan() {
-    cout << "\n=====================================\n";
-    cout << "        DATA RESERVASI HOTEL        \n";
-    cout << "=====================================\n";
+    cout << "\n=================================================================\n";
+    cout << "                     DATA RESERVASI HOTEL                        \n";
+    cout << "=================================================================\n";
 
-    if (headDLL == NULL) { 
+    if (head == NULL) { 
         cout << "Data masih kosong!\n";
         return;
     }
@@ -187,21 +220,27 @@ void tampilkan() {
     cout << left
          << setw(5)  << "No"
          << setw(15) << "Nama"
-         << setw(15) << "Kamar"
-         << setw(15) << "Lama"
+         << setw(15) << "Tipe"
+         << setw(15) << "Status"
+         << setw(10) << "Kamar"
+         << setw(10) << "Hari"
+         << setw(15) << "Total"
          << endl;
 
     cout << "-------------------------------------\n";
 
-    ReservasiDLL* temp = headDLL;
+    Reservasi* temp = head;
     int no = 1;
 
     while (temp != NULL) {
         cout << left
              << setw(5)  << no++
              << setw(15) << temp->nama
-             << setw(15) << temp->nomorKamar
-             << setw(15) << temp->lamaInap
+             << setw(15) << temp->tipeKamar
+             << setw(15) << temp->status
+             << setw(10) << temp->nomorKamar
+             << setw(10) << temp->lamaInap
+             << setw(15) << temp->total
              << endl;
 
         temp = temp->next;
@@ -219,17 +258,17 @@ void cari() {
 
     while (temp != NULL) {
         if (temp->nama == nama) {
-            cout << "\n=====================================\n";
-            cout << "         DATA DITEMUKAN             \n";
-            cout << "=====================================\n";
+            cout << "\n===== DATA DITEMUKAN =====\n";
+
             cout << "Nama        : " << temp->nama << endl;
             cout << "Kamar       : " << temp->nomorKamar << endl;
-            cout << "Lama Inap   : " << temp->lamaInap << " hari\n";
-            cout << "=====================================\n";
+            cout << "Tipe        : " << temp->tipeKamar << endl;
+            cout << "Status      : " << temp->status << endl;
+            cout << "Lama Inap   : " << temp->lamaInap << endl;
+            cout << "Total Bayar : " << temp->total << endl;
 
             ditemukan = true;
         }
-        
         temp = temp->next;
     }
 
@@ -238,72 +277,114 @@ void cari() {
     }
 }
 
-void hapusReservasi() {
+void editReservasi(){
+
     string nama;
-    cout << "\nMasukkan nama yang ingin dihapus: ";
+
+    cout << "\nMasukkan nama yang ingin diedit : ";
+    cin >> nama;
+
+    Reservasi* temp = head;
+
+    while(temp != NULL){
+
+        if(temp->nama == nama){
+
+            cout << "Nama Baru : ";
+            cin >> temp->nama;
+
+            cout << "Lama Inap Baru : ";
+            cin >> temp->lamaInap;
+
+            temp->total = temp->lamaInap * temp->harga;
+
+            simpanFile();
+
+            cout << "Data berhasil diedit!\n";
+            return;
+        }
+
+        temp = temp->next;
+    }
+
+    cout << "Data tidak ditemukan!\n";
+}
+
+void hapusReservasi(){
+
+    string nama;
+
+    cout << "\nMasukkan nama yang ingin dihapus : ";
     cin >> nama;
 
     Reservasi* temp = head;
     Reservasi* prev = NULL;
-    bool ada = false;
 
-    while (temp != NULL) {
-        if (temp->nama == nama) {
-            ada = true;
-            if (prev == NULL) {
+    while(temp != NULL){
+
+        if(temp->nama == nama){
+
+            if(prev == NULL){
+
                 head = temp->next;
-                if (head == NULL) {
-                    tail = NULL;
-                }
-            } else {
+
+            }else{
+
                 prev->next = temp->next;
-                if (temp == tail) {
-                    tail = prev;
-                }
             }
+
+            if(temp == tail){
+
+                tail = prev;
+            }
+
             delete temp;
-            break; 
+
+            simpanFile();
+
+            cout << "Data berhasil dihapus!\n";
+            return;
         }
+
         prev = temp;
         temp = temp->next;
     }
 
-    if (ada) {
-        ReservasiDLL* tempDLL = headDLL;
-        while (tempDLL != NULL) {
-            if (tempDLL->nama == nama) {
-                if (tempDLL->prev != NULL) tempDLL->prev->next = tempDLL->next;
-                else headDLL = tempDLL->next;
-
-                if (tempDLL->next != NULL) tempDLL->next->prev = tempDLL->prev;
-                else tailDLL = tempDLL->prev;
-
-                delete tempDLL;
-                break;
-            }
-            tempDLL = tempDLL->next;
-        }
-        cout << "Data berhasil dihapus!\n";
-    } else {
-        cout << "Data tidak ditemukan!\n";
-    }
+    cout << "Data tidak ditemukan!\n";
 }
 
 void sortingNama(){
-    if (headDLL == NULL) {
+    if (head == NULL) {
         cout << "Data kosong!\n";
         return;
     }
     bool tukar;
     do {
         tukar = false;
-        ReservasiDLL* current = headDLL;
+        Reservasi* current = head;
 
         while (current->next != NULL) {
             if (current->nama > current->next->nama) {
-                swap(current->nama, current->next->nama);
-                swap(current->nomorKamar, current->next->nomorKamar);
-                swap(current->lamaInap, current->next->lamaInap);
+                swap(current->nama, 
+                    current->next->nama);
+
+                swap(current->tipeKamar,
+                     current->next->tipeKamar);
+
+                swap(current->status,
+                     current->next->status);
+
+                swap(current->nomorKamar,
+                     current->next->nomorKamar);
+
+                swap(current->lamaInap,
+                     current->next->lamaInap);
+
+                swap(current->harga,
+                     current->next->harga);
+
+                swap(current->total,
+                     current->next->total);
                 tukar = true;
             }
             current = current->next;
@@ -322,19 +403,21 @@ void menuAdmin() {
         cout << "1. Tambah Reservasi\n";
         cout << "2. Tampilkan Data\n";
         cout << "3. Cari Data\n";
-        cout << "4. Hapus Reservasi\n";
-        cout << "5. Sorting Nama\n";
-        cout << "6. Logout\n";
+        cout << "4. Edit Reservasi\n";
+        cout << "5. Hapus Reservasi\n";
+        cout << "6. Sorting Nama\n";
+        cout << "7. Logout\n";
 
         cout << "Pilih : "; cin >> pilih;
         switch (pilih) {
-            case 1: buatReservasi(); break;
+            case 1: tambahReservasi(); break;
             case 2: tampilkan(); break;
             case 3: cari(); break;
-            case 4: hapusReservasi(); break;
-            case 5: sortingNama(); break;
+            case 4: editReservasi(); break;
+            case 5: hapusReservasi(); break;
+            case 6: sortingNama(); break;
         }
-    } while (pilih != 6);
+    } while (pilih != 7);
 }
 
 void menuUser() {
@@ -345,15 +428,15 @@ void menuUser() {
         cout << "=====================================\n";
         cout << "1. Buat Reservasi\n";
         cout << "2. Cari Reservasi\n";
-        // cout << "3. Check In\n";
-        // cout << "4. Check Out\n";
+        cout << "3. Check In\n";
+        cout << "4. Check Out\n";
         cout << "5. Logout\n";
         cout << "Pilih : ";
         cin >> pilih;
 
         switch(pilih){
             case 1:
-                buatReservasi();
+                tambahReservasi();
                 break;
             case 2:
                 cari();
