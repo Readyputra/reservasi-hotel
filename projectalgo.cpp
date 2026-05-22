@@ -448,20 +448,19 @@ void laporanPendapatan() {
 }
 
 void registerUser() {
-    string usn, pw, role;
+    string usn, pw;
     cout << "\n===== REGISTRASI AKUN BARU =====\n";
     cout << "Masukkan Username          : "; 
     cin >> usn;
     cout << "Masukkan Password          : "; 
     cin >> pw;
-    cout << "Pilih Role (admin / user)  : "; 
-    cin >> role;
     
     FILE *file = fopen("users.txt", "a");
-    fprintf(file, "%s %s %s\n", usn.c_str(), pw.c_str(), role.c_str());
+    fprintf(file, "%s %s user\n", usn.c_str(), pw.c_str());
     fclose(file);
     
-    cout << "Registrasi berhasil! Silakan login menggunakan akun tersebut.\n";
+    cout << "Registrasi berhasil!\n";
+    cout << "Akun otomatis dibuat sebagai user.\n";
 }
 
 bool login() {
@@ -551,10 +550,10 @@ int main() {
     
     int pilih;
     do {
-        cout << "\n===== MENU OTENTIKASI =====\n";
+        cout << "\n===== MENU AUTENTIKASI =====\n";
         cout << "1. Buat Akun Baru (Register)\n";
         cout << "2. Masuk ke Sistem (Login)\n";
-        cout << "3. Matikan Program\n";
+        cout << "3. Keluar dari Program\n";
         cout << "Pilih : "; 
         cin >> pilih;
         
